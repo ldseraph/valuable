@@ -276,27 +276,27 @@ fn test_mask_enum() {
 
 #[test]
 fn test_crate_attr_struct() {
-    // Simulate a re-export scenario by using `crate = "valuable"`
+    // Simulate a re-export scenario by using `crate = path`
     mod reexport {
         pub use valuable::*;
     }
 
     #[derive(reexport::Valuable)]
-    #[valuable(crate = "reexport")]
+    #[valuable(crate = reexport)]
     struct MyStruct {
         x: &'static str,
     }
 
     #[derive(reexport::Valuable)]
-    #[valuable(crate = "reexport")]
+    #[valuable(crate = reexport)]
     struct MyTuple(u8);
 
     #[derive(reexport::Valuable)]
-    #[valuable(crate = "reexport")]
+    #[valuable(crate = reexport)]
     struct MyUnit;
 
     #[derive(reexport::Valuable)]
-    #[valuable(crate = "reexport", transparent)]
+    #[valuable(crate = reexport, transparent)]
     struct MyTransparent(u8);
 
     let v = MyStruct { x: "hello" };
@@ -325,7 +325,7 @@ fn test_crate_attr_enum() {
     }
 
     #[derive(reexport::Valuable)]
-    #[valuable(crate = "reexport")]
+    #[valuable(crate = reexport)]
     enum MyEnum {
         Named { x: &'static str },
         Unnamed(u8),
@@ -356,7 +356,7 @@ fn test_crate_with_mask() {
     }
 
     #[derive(reexport::Valuable)]
-    #[valuable(crate = "reexport")]
+    #[valuable(crate = reexport)]
     struct SecureData {
         name: &'static str,
         #[valuable(mask)]

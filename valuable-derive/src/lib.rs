@@ -27,7 +27,7 @@ use syn::parse_macro_input;
 ///
 /// Skip the field.
 ///
-/// ## `#[valuable(crate = "...")]`
+/// ## `#[valuable(crate = path)]`
 ///
 /// Specify a custom path to the `valuable` crate. This is useful when
 /// re-exporting the derive macro from another crate.

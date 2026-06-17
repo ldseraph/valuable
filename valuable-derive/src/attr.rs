@@ -42,7 +42,7 @@ static ATTRS: &[AttrDef] = &[
         ],
         style: &[MetaStyle::Ident],
     },
-    // #[valuable(crate = "...")]
+    // #[valuable(crate = path)]
     AttrDef {
         name: "crate",
         conflicts_with: &[],
@@ -128,31 +128,20 @@ pub(crate) fn parse_attrs(cx: &Context, attrs: &[syn::Attribute], pos: Position)
             }};
         }
 
-        macro_rules! lit_str_path {
+        macro_rules! expr_path {
             ($field:ident) => {{
                 let m = match meta {
                     Meta::NameValue(m) => m,
                     _ => unreachable!(),
                 };
-                let lit = match &m.value {
-                    syn::Expr::Lit(syn::ExprLit {
-                        lit: syn::Lit::Str(l),
-                        ..
-                    }) => l,
-                    l => {
-                        cx.error(format_err!(l, "expected string literal"));
+                let path = match &m.value {
+                    syn::Expr::Path(e) => &e.path,
+                    e => {
+                        cx.error(format_err!(e, "expected path"));
                         continue;
                     }
                 };
-                match lit.parse::<syn::Path>() {
-                    Ok(path) => {
-                        $field = Some((m.clone(), path));
-                    }
-                    Err(e) => {
-                        cx.error(format_err!(lit, "expected valid path: {}", e));
-                        continue;
-                    }
-                }
+                $field = Some((m.clone(), path.clone()));
             }};
         }
 
@@ -166,8 +155,8 @@ pub(crate) fn parse_attrs(cx: &Context, attrs: &[syn::Attribute], pos: Position)
             "transparent" => transparent = Some(meta.span()),
             // #[valuable(skip)]
             "skip" => skip = Some(meta.span()),
-            // #[valuable(crate = "...")]
-            "crate" => lit_str_path!(crate_path),
+            // #[valuable(crate = path)]
+            "crate" => expr_path!(crate_path),
             // #[valuable(mask)] or #[valuable(mask = "...")]
             "mask" => match meta {
                 Meta::Path(_) => {
