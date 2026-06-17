@@ -274,6 +274,105 @@ fn test_mask_enum() {
     );
 }
 
+#[test]
+fn test_crate_attr_struct() {
+    // Simulate a re-export scenario by using `crate = "valuable"`
+    mod reexport {
+        pub use valuable::*;
+    }
+
+    #[derive(reexport::Valuable)]
+    #[valuable(crate = "reexport")]
+    struct MyStruct {
+        x: &'static str,
+    }
+
+    #[derive(reexport::Valuable)]
+    #[valuable(crate = "reexport")]
+    struct MyTuple(u8);
+
+    #[derive(reexport::Valuable)]
+    #[valuable(crate = "reexport")]
+    struct MyUnit;
+
+    #[derive(reexport::Valuable)]
+    #[valuable(crate = "reexport", transparent)]
+    struct MyTransparent(u8);
+
+    let v = MyStruct { x: "hello" };
+    assert_eq!(
+        format!("{:?}", reexport::Valuable::as_value(&v)),
+        r#"MyStruct { x: "hello" }"#
+    );
+    let v = MyTuple(42);
+    assert_eq!(
+        format!("{:?}", reexport::Valuable::as_value(&v)),
+        "MyTuple(42)"
+    );
+    let v = MyUnit;
+    assert_eq!(format!("{:?}", reexport::Valuable::as_value(&v)), "MyUnit");
+    let v = MyTransparent(7);
+    assert!(matches!(
+        reexport::Valuable::as_value(&v),
+        reexport::Value::U8(7)
+    ));
+}
+
+#[test]
+fn test_crate_attr_enum() {
+    mod reexport {
+        pub use valuable::*;
+    }
+
+    #[derive(reexport::Valuable)]
+    #[valuable(crate = "reexport")]
+    enum MyEnum {
+        Named { x: &'static str },
+        Unnamed(u8),
+        Unit,
+    }
+
+    let v = MyEnum::Named { x: "world" };
+    assert_eq!(
+        format!("{:?}", reexport::Valuable::as_value(&v)),
+        r#"MyEnum::Named { x: "world" }"#
+    );
+    let v = MyEnum::Unnamed(1);
+    assert_eq!(
+        format!("{:?}", reexport::Valuable::as_value(&v)),
+        "MyEnum::Unnamed(1)"
+    );
+    let v = MyEnum::Unit;
+    assert_eq!(
+        format!("{:?}", reexport::Valuable::as_value(&v)),
+        "MyEnum::Unit"
+    );
+}
+
+#[test]
+fn test_crate_with_mask() {
+    mod reexport {
+        pub use valuable::*;
+    }
+
+    #[derive(reexport::Valuable)]
+    #[valuable(crate = "reexport")]
+    struct SecureData {
+        name: &'static str,
+        #[valuable(mask)]
+        secret: &'static str,
+    }
+
+    let v = SecureData {
+        name: "alice",
+        secret: "password",
+    };
+    assert_eq!(
+        format!("{:?}", reexport::Valuable::as_value(&v)),
+        r#"SecureData { name: "alice", secret: "<redacted>" }"#
+    );
+}
+
 #[rustversion::attr(not(stable), ignore)]
 #[test]
 fn ui() {
